@@ -11,6 +11,11 @@ OFFSET = 10**6
 class URLCRUD:
     @staticmethod
     def create_url(db: Session, url: str) -> URL:
+        existing_url = db.scalar(select(URL).where(URL.url == url))
+    
+        if existing_url:
+            return existing_url
+    
         seq = Sequence("urls_id_seq")
         next_id = db.scalar(func.next_value(seq))
         short_code = ShortenerService.encode(next_id + OFFSET)
