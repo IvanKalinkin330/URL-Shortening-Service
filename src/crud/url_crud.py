@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select, func, Sequence
 
 from src.models import URL
 from src.services.shortener import ShortenerService
@@ -11,7 +11,8 @@ OFFSET = 10**6
 class URLCRUD:
     @staticmethod
     def create_url(db: Session, url: str) -> URL:
-        next_id = db.scalar(func.next_value("urls_id_seq"))
+        seq = Sequence("urls_id_seq")
+        next_id = db.scalar(func.next_value(seq))
         short_code = ShortenerService.encode(next_id + OFFSET)
 
         db_url = URL(id=next_id, url=url, short_code=short_code)
