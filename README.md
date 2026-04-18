@@ -1,6 +1,6 @@
 # URL Shortening Service FastAPI
----
-API for a URL shortening service. The API allow users to perform the following operations:
+
+Async API for a URL shortening service. The API allow users to perform the following operations:
 - Create a new short code (using Base62 coding)
 - Retrieve an original URL from a short code
 - Redirect to original URL from a short code
@@ -10,7 +10,7 @@ API for a URL shortening service. The API allow users to perform the following o
 
 
 ## Technologies
----
+
 - Python
 - FastAPI
 - PostgreSQL
@@ -20,7 +20,7 @@ API for a URL shortening service. The API allow users to perform the following o
 
 
 ## Install
----
+
 ```bash
 git clone https://github.com/pdnxhdm/URL-Shortening-Service
 cd URL-Shortening-Service
@@ -36,7 +36,7 @@ uvicorn src.main:app --reload
 
 
 ## Database Schema
----
+
 ### **urls**
 | Column | Type | Description |
 | :--- | :--- | :--- |
@@ -49,7 +49,7 @@ uvicorn src.main:app --reload
 
 
 ## Environment Variables
----
+
 ```env
 DB_HOST: str
 DB_PORT: int
@@ -59,7 +59,7 @@ DB_NAME: str
 ```
 
 ## API Endpoints
----
+
 ### Create Short URL
 
 ##### Request
@@ -167,31 +167,32 @@ GET /shorten/abc123/stats
 The endpoint return a **`200 OK`** status code with the statistics or a **`404 Not Found`** status code if the short URL was not found
 
 ## Sample code
----
+
 ```python
 class URLCRUD:
     @staticmethod
-    def create_url(db: Session, url: str) -> URL:
-        existing_url = db.scalar(select(URL).where(URL.url == url))
+    async def create_url(db: AsyncSession, url: str) -> URL:
+        query = select(URL).where(URL.url == url)
+        existing_url = await db.scalar(query)
 
         if existing_url:
             return existing_url
 
         # Generating a unique short code using Base62
         seq = Sequence("urls_id_seq")
-        next_id = db.scalar(func.next_value(seq))
+        next_id = await db.scalar(select(func.next_value(seq)))
         # OFFSET is needed so that the short code does not start with 1
-        short_code = ShortenerService.encode(next_id + OFFSET)
+        short_code = ShortenerService.encode(next_id + config.OFFSET)
 
         db_url = URL(id=next_id, url=url, short_code=short_code)
 
         db.add(db_url)
-        db.commit()
-        db.refresh(db_url)
+        await db.commit()
+        await db.refresh(db_url)
 
         return db_url
 ```
 
 ## Team
----
+
 Ivan Kalinkin - Python Backend Developer
